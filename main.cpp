@@ -12,6 +12,9 @@
 #include <QByteArray>
 #include <QProcess>
 #include <QDebug>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
+#include <QNetworkRequest>
 
 class LlamaFrontend : public QWidget {
     Q_OBJECT
@@ -55,6 +58,63 @@ tokens->setText("160");
             output->insertPlainText(QString::fromUtf8(data));
         });
 
+QPushButton *downloadModelBtn = new QPushButton("download", this);
+layout->addWidget(downloadModelBtn);
+        manager = new QNetworkAccessManager(this);
+        QObject::connect(downloadModelBtn, &QPushButton::clicked, [&]() {
+            if (!QFileInfo::exists("tinyllama-1.1b-chat-v1.0.Q6_K.gguf")){
+            QString initialUrl = "https://huggingface.co/TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF/resolve/main/tinyllama-1.1b-chat-v1.0.Q6_K.gguf";
+           // QString outputDir = "/model";
+            QString outputFile = QApplication::applicationDirPath() + "/tinyllama-1.1b-chat-v1.0.Q6_K.gguf";
+
+        //    QDir().mkpath(outputDir);
+            QNetworkRequest request(initialUrl);
+            QNetworkReply *reply = manager->get(request);
+
+            QObject::connect(reply, &QNetworkReply::finished, [=]() {
+                QVariant redirect = reply->attribute(QNetworkRequest::RedirectionTargetAttribute);
+                if (redirect.isValid()) {
+                    // Got a redirect (LFS behavior), follow it
+                    QUrl redirectedUrl = redirect.toUrl();
+                    QNetworkRequest newReq(redirectedUrl);
+                    QNetworkReply *finalReply = manager->get(newReq);
+
+                    QObject::connect(finalReply, &QNetworkReply::finished, [=]() {
+                        if (finalReply->error() == QNetworkReply::NoError) {
+                            QFile file(outputFile);
+                            if (file.open(QIODevice::WriteOnly)) {
+                                file.write(finalReply->readAll());
+                                file.close();
+                                input->setText("✅ Model downloaded after redirect!");
+                            } else {
+                                input->setText("❌ Failed to save redirected model.");
+                            }
+                        } else {
+                            input->setText("❌ Redirected download failed: " + finalReply->errorString());
+                        }
+                        finalReply->deleteLater();
+                    });
+                } else {
+                    // No redirect (unlikely for Hugging Face LFS)
+                    if (reply->error() == QNetworkReply::NoError) {
+                        QFile file(outputFile);
+                        if (file.open(QIODevice::WriteOnly)) {
+                            file.write(reply->readAll());
+                            file.close();
+                            input->setText("✅ Model downloaded directly!");
+                        } else {
+                            input->setText("❌ Failed to write model file.");
+                        }
+                    } else {
+                        input->setText("❌ Download failed: " + reply->errorString());
+                    }
+                }
+                reply->deleteLater();
+            });
+
+            input->setText("📥 Downloading model could take a while!(1.5GB)...");
+            }else{  input->setText("❌ already downloaded.");}
+        });
 
         connect(proc, &QProcess::readyReadStandardError, this, [=]() {
             QByteArray data = proc->readAllStandardError();
@@ -89,10 +149,10 @@ private:
     QPlainTextEdit *output;
     QProcess *proc;
     QLabel *modelLabel;
-    QString modelPath = QApplication::applicationDirPath() + "/llama-2-7b.Q2_K.gguf";  // Default
+    QString modelPath = QApplication::applicationDirPath() + "/TinyLlama-1.1B-Chat-v1.0-GGUF/blob/main/tinyllama-1.1b-chat-v1.0.Q6_K.gguf";  // Default
     QLabel *ltokens;
     QLineEdit *tokens;
-
+QNetworkAccessManager *manager;
     void chooseModel() {
         QString file = QFileDialog::getOpenFileName(this, "Choose Model", "", "GGUF Model (*.gguf)");
         if (!file.isEmpty()) {
