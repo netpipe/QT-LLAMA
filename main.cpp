@@ -94,8 +94,8 @@ private:
 
             if (proc->state() != QProcess::NotRunning) {
                 proc->kill();  // Immediately kills the process
-                proc->waitForFinished();  // Optional: wait until it's dead
-                qDebug() << "Process was killed.";
+              //  proc->waitForFinished();  // Optional: wait until it's dead
+              //  qDebug() << "Process was killed.";
             }
 
 
