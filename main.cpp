@@ -7,6 +7,11 @@
 #include <QProcess>
 #include <QFileDialog>
 #include <QLabel>
+#include <QDebug>
+#include <QProcessEnvironment>
+#include <QByteArray>
+#include <QProcess>
+#include <QDebug>
 
 class LlamaFrontend : public QWidget {
     Q_OBJECT
@@ -36,11 +41,28 @@ public:
 
         proc = new QProcess(this);
         connect(proc, &QProcess::readyReadStandardOutput, this, [=]() {
-            output->appendPlainText(proc->readAllStandardOutput());
+            QByteArray data = proc->readAllStandardOutput();
+            output->moveCursor(QTextCursor::End);
+            output->insertPlainText(QString::fromUtf8(data));
         });
 
+
         connect(proc, &QProcess::readyReadStandardError, this, [=]() {
-            output->appendPlainText(proc->readAllStandardError());
+            QByteArray data = proc->readAllStandardError();
+            output->appendPlainText(QString::fromLocal8Bit(data));
+            qDebug() << "STDERR:" << data;
+        });
+
+        connect(proc, static_cast<void(QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished),
+                this, [=](int code, QProcess::ExitStatus status) {
+            qDebug() << "Process finished with code:" << code << "status:" << status;
+            if (status == QProcess::CrashExit)
+                output->appendPlainText("llama-cli crashed.");
+        });
+
+        connect(proc, &QProcess::errorOccurred, this, [=](QProcess::ProcessError error) {
+            qDebug() << "Process error:" << error;
+            output->appendPlainText("Process error occurred. Check if llama-cli is in your PATH.");
         });
     }
 
@@ -58,7 +80,7 @@ private:
     QPlainTextEdit *output;
     QProcess *proc;
     QLabel *modelLabel;
-    QString modelPath = "./model.gguf";  // Default model path
+    QString modelPath = QApplication::applicationDirPath() + "/llama-2-7b.Q2_K.gguf";  // Default
 
     void chooseModel() {
         QString file = QFileDialog::getOpenFileName(this, "Choose Model", "", "GGUF Model (*.gguf)");
@@ -69,17 +91,43 @@ private:
     }
 
     void runLlama() {
+
+            if (proc->state() != QProcess::NotRunning) {
+                proc->kill();  // Immediately kills the process
+                proc->waitForFinished();  // Optional: wait until it's dead
+                qDebug() << "Process was killed.";
+            }
+
+
         QString prompt = input->text().trimmed();
-        if (prompt.isEmpty()) return;
+        if (prompt.isEmpty()) {
+            output->appendPlainText("Prompt is empty.");
+            return;
+        }
+
+        if (!QFile::exists(modelPath)) {
+            output->appendPlainText("Model file does not exist: " + modelPath);
+            return;
+        }
 
         output->clear();
+        output->appendPlainText("Running llama-cli...\n");
+
         QStringList args;
         args << "--flash-attn"
              << "--model" << modelPath
              << "--prompt" << prompt
-             << "--n-predict" << "64";  // You can expose this as UI too
+             << "--n-predict" << "164";
 
-        proc->start("llama-cli", args);
+        qputenv("DYLD_LIBRARY_PATH",  QApplication::applicationDirPath().toUtf8()
++ "/");
+    //    qputenv("DYLD_LIBRARY_PATH", "/Applications/QT-LLAMA.app/Contents/MacOS");
+
+        QString command = QApplication::applicationDirPath() + "/llama-cli";
+        output->appendPlainText("Command: " + command + " " + args.join(" "));
+
+        qDebug() << "Starting process:" << command << args;
+        proc->start(command, args);
     }
 };
 

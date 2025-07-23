@@ -29,8 +29,7 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 RESOURCES +=
 
 
-LIBS += -L/Users/macbook2015/Desktop/brew/lib3 -L/Users/macbook2015/Downloads/llama-2.cpp-master/lib
- -lllama
+LIBS += -L/Users/macbook2015/Desktop/brew/lib3
 
 INCLUDEPATH += /Users/macbook2015/Desktop/brew/include /Users/macbook2015/Desktop/brew/lib /Users/macbook2015/Downloads/llama-2.cpp-master/include
 
