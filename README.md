@@ -1,5 +1,6 @@
 # QT-LLAMA
 QT Frontend llama-cli client
+For Chatting With LLMA Models (AI chat)
 
 Models I've tried
 https://huggingface.co/TheBloke/Llama-2-7B-GGUF/tree/main
