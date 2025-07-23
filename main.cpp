@@ -149,7 +149,7 @@ private:
     QPlainTextEdit *output;
     QProcess *proc;
     QLabel *modelLabel;
-    QString modelPath = QApplication::applicationDirPath() + "/TinyLlama-1.1B-Chat-v1.0-GGUF/blob/main/tinyllama-1.1b-chat-v1.0.Q6_K.gguf";  // Default
+    QString modelPath = QApplication::applicationDirPath() + "/tinyllama-1.1b-chat-v1.0.Q6_K.gguf";  // Default
     QLabel *ltokens;
     QLineEdit *tokens;
 QNetworkAccessManager *manager;
