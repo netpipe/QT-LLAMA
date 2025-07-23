@@ -22,9 +22,18 @@ public:
 
         modelLabel = new QLabel("Model: (Click to choose)", this);
         modelLabel->setStyleSheet("color: blue; text-decoration: underline;");
+
         layout->addWidget(modelLabel);
+
+tokens = new QLineEdit(this);
+tokens->setText("160");
+// layout->addWidget(ltokens);
+    layout->addWidget(tokens);
+
         connect(modelLabel, &QLabel::linkActivated, this, &LlamaFrontend::chooseModel);
         modelLabel->installEventFilter(this);
+
+
 
         input = new QLineEdit(this);
         input->setPlaceholderText("Enter your prompt...");
@@ -81,6 +90,8 @@ private:
     QProcess *proc;
     QLabel *modelLabel;
     QString modelPath = QApplication::applicationDirPath() + "/llama-2-7b.Q2_K.gguf";  // Default
+    QLabel *ltokens;
+    QLineEdit *tokens;
 
     void chooseModel() {
         QString file = QFileDialog::getOpenFileName(this, "Choose Model", "", "GGUF Model (*.gguf)");
@@ -94,8 +105,8 @@ private:
 
             if (proc->state() != QProcess::NotRunning) {
                 proc->kill();  // Immediately kills the process
-              //  proc->waitForFinished();  // Optional: wait until it's dead
-              //  qDebug() << "Process was killed.";
+                proc->waitForFinished();  // Optional: wait until it's dead
+                qDebug() << "Process was killed.";
             }
 
 
@@ -117,7 +128,7 @@ private:
         args << "--flash-attn"
              << "--model" << modelPath
              << "--prompt" << prompt
-             << "--n-predict" << "164";
+             << "--n-predict" << tokens->text();
 
         qputenv("DYLD_LIBRARY_PATH",  QApplication::applicationDirPath().toUtf8()
 + "/");
