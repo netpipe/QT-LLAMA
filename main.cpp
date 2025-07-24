@@ -172,7 +172,7 @@ QNetworkAccessManager *manager;
     }
 
     void startServer() {
-         if (!QFileInfo::exists(modelPath)){
+         if (QFileInfo::exists(modelPath)){
         if (serverProcess->state() == QProcess::Running) {
             output->appendPlainText("[Server already running]");
             return;
