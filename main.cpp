@@ -69,10 +69,10 @@ QPushButton *downloadModelBtn = new QPushButton("Download Model", this);
 layout->addWidget(downloadModelBtn);
         manager = new QNetworkAccessManager(this);
         QObject::connect(downloadModelBtn, &QPushButton::clicked, [&]() {
-            if (!QFileInfo::exists(QApplication::applicationDirPath() + "/tinyllama-1.1b-chat-v1.0.Q6_K.gguf")){
+            if (!QFileInfo::exists(QApplication::applicationDirPath() + model)){
             QString initialUrl = "https://huggingface.co/TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF/resolve/main/tinyllama-1.1b-chat-v1.0.Q6_K.gguf";
            // QString outputDir = "/model";
-            QString outputFile = QApplication::applicationDirPath() + "/tinyllama-1.1b-chat-v1.0.Q6_K.gguf";
+            QString outputFile = QApplication::applicationDirPath() + model;
 
         //    QDir().mkpath(outputDir);
             QNetworkRequest request(initialUrl);
@@ -156,7 +156,8 @@ private:
     QPlainTextEdit *output;
     QProcess *proc;
     QLabel *modelLabel;
-    QString modelPath = QApplication::applicationDirPath() + "/tinyllama-1.1b-chat-v1.0.Q6_K.gguf";  // Default
+    QString model = "/tinyllama-1.1b-chat-v1.0.Q6_K.gguf";
+    QString modelPath = QApplication::applicationDirPath() + model;  // Default
     QLabel *ltokens;
     QLineEdit *tokens;
 QNetworkAccessManager *manager;
@@ -171,6 +172,7 @@ QNetworkAccessManager *manager;
     }
 
     void startServer() {
+         if (!QFileInfo::exists(modelPath)){
         if (serverProcess->state() == QProcess::Running) {
             output->appendPlainText("[Server already running]");
             return;
@@ -190,6 +192,7 @@ QNetworkAccessManager *manager;
 
         QString link = "http://localhost:8080"; // Replace with your desired URL
         QDesktopServices::openUrl(QUrl(link));
+         }
 
     }
 
