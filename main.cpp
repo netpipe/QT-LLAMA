@@ -15,6 +15,9 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QNetworkRequest>
+#include <QJsonObject>
+#include <QJsonDocument>
+#include <QDesktopServices>
 
 class LlamaFrontend : public QWidget {
     Q_OBJECT
@@ -48,6 +51,10 @@ tokens->setText("160");
         output = new QPlainTextEdit(this);
         output->setReadOnly(true);
         layout->addWidget(output);
+ serverProcess = new QProcess(this);
+         auto *StartLLamaServer = new QPushButton("Option2 Server + Open Browser", this);
+                connect(StartLLamaServer, &QPushButton::clicked, this, &LlamaFrontend::startServer);
+                layout->addWidget(StartLLamaServer);
 
         connect(button, &QPushButton::clicked, this, &LlamaFrontend::runLlama);
 
@@ -58,11 +65,11 @@ tokens->setText("160");
             output->insertPlainText(QString::fromUtf8(data));
         });
 
-QPushButton *downloadModelBtn = new QPushButton("download", this);
+QPushButton *downloadModelBtn = new QPushButton("Download Model", this);
 layout->addWidget(downloadModelBtn);
         manager = new QNetworkAccessManager(this);
         QObject::connect(downloadModelBtn, &QPushButton::clicked, [&]() {
-            if (!QFileInfo::exists("tinyllama-1.1b-chat-v1.0.Q6_K.gguf")){
+            if (!QFileInfo::exists(QApplication::applicationDirPath() + "/tinyllama-1.1b-chat-v1.0.Q6_K.gguf")){
             QString initialUrl = "https://huggingface.co/TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF/resolve/main/tinyllama-1.1b-chat-v1.0.Q6_K.gguf";
            // QString outputDir = "/model";
             QString outputFile = QApplication::applicationDirPath() + "/tinyllama-1.1b-chat-v1.0.Q6_K.gguf";
@@ -153,12 +160,68 @@ private:
     QLabel *ltokens;
     QLineEdit *tokens;
 QNetworkAccessManager *manager;
+    QProcess *serverProcess;
+
     void chooseModel() {
         QString file = QFileDialog::getOpenFileName(this, "Choose Model", "", "GGUF Model (*.gguf)");
         if (!file.isEmpty()) {
             modelPath = file;
             modelLabel->setText("Model: " + modelPath);
         }
+    }
+
+    void startServer() {
+        if (serverProcess->state() == QProcess::Running) {
+            output->appendPlainText("[Server already running]");
+            return;
+        }
+        qputenv("DYLD_LIBRARY_PATH",  QApplication::applicationDirPath().toUtf8()
++ "/");
+        QString program = QApplication::applicationDirPath() + "/llama-server";  // Adjust to path of your llama server binary
+        QStringList arguments;
+        arguments << "--model" << modelPath << "--port" << "8080";
+
+        serverProcess->start(program, arguments);
+        if (!serverProcess->waitForStarted(3000)) {
+            output->appendPlainText("[Failed to start server]");
+        } else {
+            output->appendPlainText("[Server started]");
+        }
+
+        QString link = "http://localhost:8080"; // Replace with your desired URL
+        QDesktopServices::openUrl(QUrl(link));
+
+    }
+
+    void sendPrompt() {
+        QString prompt = input->text().trimmed();
+        if (prompt.isEmpty()) return;
+
+        QUrl url("http://localhost:8080/completion");
+        QNetworkRequest request(url);
+        request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+
+        QJsonObject body;
+        body["prompt"] = prompt;
+        //nTokens = tokeninput->text().toInt();
+        body["n_predict"] = 128;// nTokens;
+
+        QJsonDocument doc(body);
+        QByteArray data = doc.toJson();
+
+        QNetworkReply *reply = manager->post(request, data);
+        connect(reply, &QNetworkReply::finished, [this, reply]() {
+            QByteArray response = reply->readAll();
+            reply->deleteLater();
+
+            QJsonDocument json = QJsonDocument::fromJson(response);
+            if (json.isObject() && json.object().contains("content")) {
+                output->appendPlainText("> " + input->text());
+                output->appendPlainText(json.object()["content"].toString() + "\n");
+            } else {
+                output->appendPlainText("[Error] Unexpected response.");
+            }
+        });
     }
 
     void runLlama() {
