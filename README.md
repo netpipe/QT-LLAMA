@@ -2,6 +2,8 @@
 QT Frontend llama-cli client
 For Chatting With LLMA Models (AI chat)
 
+click download model button then either chat in gui or use Option2 button and browser
+
 ![screenshot ](screenshot.png)
 
 Models I've tried
@@ -15,6 +17,7 @@ Phind-CodeLlama-34B-v2 GGUF — very strong at answering coding questions and de
 DeepSeek Coder 6.7B or 1.3B GGUF — compact and great for local use.
 StarCoder2 15B GGUF — strong general-purpose coder.
 
+![browser ](browser.png)
 ![somemodels ](SomeModels.png)
 
 MacOS instructions for updating
