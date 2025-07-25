@@ -18,7 +18,8 @@ DeepSeek Coder 6.7B or 1.3B GGUF — compact and great for local use.
 StarCoder2 15B GGUF — strong general-purpose coder.
 
 ![browser ](browser.png)
-![somemodels ](SomeModels.png)
+capybarahermes-2.5-mistral-7b.Q4_0.gguf large but good
+llama-2-7b.Q4_0.gguf
 
 MacOS instructions for updating
 "brew install llama.cpp" to get newer version of llama-cli and place it inside app folder
