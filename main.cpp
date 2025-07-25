@@ -45,7 +45,7 @@ tokens->setText("160");
         input->setPlaceholderText("Enter your prompt...");
         layout->addWidget(input);
 
-        auto *button = new QPushButton("Run llama-cli", this);
+        auto *button = new QPushButton("Run llama-cli or sendtoserver", this);
         layout->addWidget(button);
 
         output = new QPlainTextEdit(this);
