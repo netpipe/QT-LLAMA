@@ -162,7 +162,7 @@ private:
     QLineEdit *tokens;
 QNetworkAccessManager *manager;
     QProcess *serverProcess;
-
+bool serverMode;
     void chooseModel() {
         QString file = QFileDialog::getOpenFileName(this, "Choose Model", "", "GGUF Model (*.gguf)");
         if (!file.isEmpty()) {
@@ -181,13 +181,14 @@ QNetworkAccessManager *manager;
 + "/");
         QString program = QApplication::applicationDirPath() + "/llama-server";  // Adjust to path of your llama server binary
         QStringList arguments;
-        arguments << "--model" << modelPath << "--port" << "8080";
+        arguments << "--model" << modelPath << "--port" << "8080" <<  "-n" << "2000";
 
         serverProcess->start(program, arguments);
         if (!serverProcess->waitForStarted(3000)) {
             output->appendPlainText("[Failed to start server]");
         } else {
             output->appendPlainText("[Server started]");
+            serverMode=true;
         }
 
         QString link = "http://localhost:8080"; // Replace with your desired URL
@@ -206,8 +207,8 @@ QNetworkAccessManager *manager;
 
         QJsonObject body;
         body["prompt"] = prompt;
-        //nTokens = tokeninput->text().toInt();
-        body["n_predict"] = 128;// nTokens;
+        int nTokens = tokens->text().toInt();
+        body["n_predict"] = nTokens;// nTokens;
 
         QJsonDocument doc(body);
         QByteArray data = doc.toJson();
@@ -228,7 +229,8 @@ QNetworkAccessManager *manager;
     }
 
     void runLlama() {
-
+if(!serverMode){sendPrompt();}else
+{
             if (proc->state() != QProcess::NotRunning) {
                 proc->kill();  // Immediately kills the process
                 proc->waitForFinished();  // Optional: wait until it's dead
@@ -265,6 +267,7 @@ QNetworkAccessManager *manager;
 
         qDebug() << "Starting process:" << command << args;
         proc->start(command, args);
+    }
     }
 };
 
