@@ -229,11 +229,12 @@ bool serverMode;
     }
 
     void runLlama() {
-if(serverMode){            if (proc->state() != QProcess::NotRunning) {
-        proc->kill();  // Immediately kills the process
-        proc->waitForFinished();  // Optional: wait until it's dead
-        qDebug() << "Process was killed.";
-    }
+    if(serverMode){
+        //if (proc->state() != QProcess::NotRunning) {
+   //     proc->kill();  // Immediately kills the process
+    //    proc->waitForFinished();  // Optional: wait until it's dead
+    //    qDebug() << "Process was killed.";
+   // }
     sendPrompt();
 }else
 {
