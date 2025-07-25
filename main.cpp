@@ -188,7 +188,7 @@ bool serverMode;
             output->appendPlainText("[Failed to start server]");
         } else {
             output->appendPlainText("[Server started]");
-         //   serverMode=true;
+            serverMode=true;
         }
 
         QString link = "http://localhost:8080"; // Replace with your desired URL
@@ -229,7 +229,13 @@ bool serverMode;
     }
 
     void runLlama() {
-if(serverMode){sendPrompt();}else
+if(serverMode){            if (proc->state() != QProcess::NotRunning) {
+        proc->kill();  // Immediately kills the process
+        proc->waitForFinished();  // Optional: wait until it's dead
+        qDebug() << "Process was killed.";
+    }
+    sendPrompt();
+}else
 {
             if (proc->state() != QProcess::NotRunning) {
                 proc->kill();  // Immediately kills the process
