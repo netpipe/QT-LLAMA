@@ -19,6 +19,10 @@
 #include <QJsonDocument>
 #include <QDesktopServices>
 
+//browser for gguf files to download
+//exporting conversations
+
+
 class LlamaFrontend : public QWidget {
     Q_OBJECT
 
